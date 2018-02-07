@@ -11,7 +11,7 @@ extends 'InfluxDB::Writer::RememberingFileTailer';
 with 'MooseX::Getopt';
 
 use Log::Any::Adapter ( 'Stderr',
-    log_level => $ENV{DEBUG} ? 'trace' : 'warning' );
+    log_level => $ENV{DEBUG} ? 'debug' : 'warning' );
 
 my $runner = Runner->new_with_options->run;
 
