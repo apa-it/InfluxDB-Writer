@@ -1,4 +1,5 @@
 .build
 cpanfile.snapshot
+carton.success
 InfluxDB-Writer-*
 local
