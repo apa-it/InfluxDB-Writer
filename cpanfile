@@ -7,3 +7,8 @@ requires 'lib::projectroot' => '1.004';
 requires 'Log::Any::Adapter';
 requires 'InfluxDB::LineProtocol';
 requires 'Time::Moment';
+
+# testing
+on 'test' => sub {
+    require 'Test::MockModule';
+};
