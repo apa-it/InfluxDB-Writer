@@ -100,7 +100,7 @@ sub slurp_and_send {
             }
             if ($line !~ /\s\d+$/) {
                 # Line does not end in timestamp
-                $log->warnf("Skipping probably broken line %s", $line);
+                $log->warnf('Skipping probably broken line %s >>%s<<', $file, $line);
                 next;
             
             }
@@ -108,8 +108,8 @@ sub slurp_and_send {
 
             if ( $self->buffer_size > $self->flush_size ) {
                 if ( !$self->send ) {
-                    $log->warnf( "Unable to send buffer (%i lines)",
-                        $self->buffer_size );
+                    $log->warnf( "Unable to send buffer %s (%i lines)",
+                        $file, $self->buffer_size );
                     return;
                 }
             }
@@ -119,8 +119,8 @@ sub slurp_and_send {
             $log->infof( "Clear buffer (size %i) for file %s",
                 $self->buffer_size, $file );
             if ( !$self->send ) {
-                $log->warnf( "Unable to send clear buffer (%i lines)",
-                    $self->buffer_size );
+                $log->warnf( "Unable to send clear buffer %s (%i lines)",
+                    $file, $self->buffer_size );
                 return;
             }
         }
