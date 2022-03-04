@@ -16,11 +16,16 @@ sub _build__auth_header {
     my $self = shift;
 
     if ( $self->influx_username && $self->influx_password ) {
-        my $base64 = encode_base64(
-            join( ":", $self->influx_username, $self->influx_password ) );
-        chomp($base64);
+        if ($self->can('is_v2') && $self->is_v2) {
+            return 'Token '.$self->influx_password;
+        }
+        else {
+            my $base64 = encode_base64(
+                join( ":", $self->influx_username, $self->influx_password ) );
+            chomp($base64);
 
-        return "Basic $base64";
+            return "Basic $base64";
+        }
     } else {
         return "";
     }

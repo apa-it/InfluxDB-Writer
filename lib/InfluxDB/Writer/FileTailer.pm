@@ -20,29 +20,57 @@ use Cwd 'abs_path';
 
 with qw(InfluxDB::Writer::AuthHeaderRole);
 
-has 'dir'         => ( is => 'ro', isa => 'Str', required => 1 );
+has 'dir' => ( is => 'ro', isa => 'Str', required => 1 );
+has 'influx_version' =>
+    ( is => 'ro', isa => 'Int', required => 1, default => 1 );
 has 'influx_host' => ( is => 'ro', isa => 'Str', required => 1 );
 has 'influx_port' =>
     ( is => 'ro', isa => 'Int', default => 8086, required => 1 );
-has 'influx_db' => ( is => 'ro', isa => 'Str', required => 1 );
+has 'influx_db' =>
+    ( is => 'ro', isa => 'Str', required => 0, predicate => 'is_v1' );
+has 'influx_bucket' =>
+    ( is => 'ro', isa => 'Str', required => 0, predicate => 'is_v2' );
+has 'influx_org' => ( is => 'ro', isa => 'Str', required => 0, );
 
 has 'flush_size' =>
     ( is => 'ro', isa => 'Int', required => 1, default => 1000 );
 has 'flush_interval' =>
     ( is => 'ro', isa => 'Int', required => 1, default => 30 );
-has 'tags' => ( is => 'ro', isa => 'HashRef', predicate => 'has_tags' );
-has '_files' => ( is => 'ro', isa => 'HashRef', default => sub { {} } );
-has '_loop' => ( is => 'ro', isa => 'IO::Async::Loop', lazy_build => 1 );
-has 'buffer' => ( is => 'ro', isa => 'ArrayRef[Str]', default => sub { [] }, traits => ['Array'],
+has 'tags'   => ( is => 'ro', isa => 'HashRef', predicate => 'has_tags' );
+has '_files' => ( is => 'ro', isa => 'HashRef', default   => sub { {} } );
+has '_loop'  => ( is => 'ro', isa => 'IO::Async::Loop', lazy_build => 1 );
+has 'buffer' => (
+    is      => 'ro',
+    isa     => 'ArrayRef[Str]',
+    default => sub { [] },
+    traits  => ['Array'],
     handles => {
-        buffer_push => 'push',
-        buffer_all => 'elements',
-        buffer_size => 'count',
-        buffer_splice => 'splice',
+        buffer_push     => 'push',
+        buffer_all      => 'elements',
+        buffer_size     => 'count',
+        buffer_splice   => 'splice',
         buffer_is_empty => 'is_empty',
     },
 
 );
+
+around BUILDARGS => sub {
+    my $orig  = shift;
+    my $class = shift;
+
+    my %args;
+    if ( @_ == 1 && ref( $_[0] ) eq 'HASH' ) {
+        %args = %{ $_[0] };
+    }
+    else {
+        %args = @_;
+    }
+
+    croak 'influx_db or influx_bucket has to be set'
+        if !$args{influx_db} && !$args{influx_bucket};
+
+    $class->$orig(@_);
+};
 
 sub _build__loop {
     return IO::Async::Loop->new;
@@ -220,15 +248,31 @@ sub send {
 
     ( my $body = join("\n", @to_send) ) =~ s/\n{2,}/\n/gs;
 
-    my $request_data = { 
-        method       => "POST",
-        host         => $self->influx_host,
-        port         => $self->influx_port,
-        path         => "/write",
-        query_string => "db=" . $self->influx_db,
-        body         => $body,
-        %args,
-    };
+    my $request_data;
+    if ( $self->is_v2 ) {
+        $request_data = {
+            method       => "POST",
+            host         => $self->influx_host,
+            port         => $self->influx_port,
+            path         => "/api/v2/write",
+            query_string => "precision=ns&bucket="
+                . $self->influx_bucket . '&org='
+                . $self->influx_org,
+            body => $body,
+            %args,
+        };
+    }
+    else {
+        $request_data = {
+            method       => "POST",
+            host         => $self->influx_host,
+            port         => $self->influx_port,
+            path         => "/write",
+            query_string => "db=" . $self->influx_db,
+            body         => $body,
+            %args,
+        };
+    }
     $log->tracef("The Hijk::Request: %s", $request_data);
     my $res = Hijk::request($request_data);
 
