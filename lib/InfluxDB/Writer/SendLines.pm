@@ -75,12 +75,13 @@ sub send {
 
     $log->debugf( "Sending %i lines to influx", scalar @$to_send );
     my $res = Hijk::request(
-        {   method       => "POST",
-            host         => $self->influx_host,
-            port         => $self->influx_port,
-            path         => "/write",
-            query_string => "db=" . $self->influx_db,
-            body         => join( '', @$to_send ),
+        {   method        => "POST",
+            host          => $self->influx_host,
+            port          => $self->influx_port,
+            path          => "/write",
+            query_string  => "db=" . $self->influx_db,
+            body          => join( '', @$to_send ),
+            parse_chunked => 1,
             %args,
         }
     );

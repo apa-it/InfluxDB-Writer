@@ -258,18 +258,20 @@ sub send {
             query_string => "precision=ns&bucket="
                 . $self->influx_bucket . '&org='
                 . $self->influx_org,
-            body => $body,
+            body          => $body,
+            parse_chunked => 1,
             %args,
         };
     }
     else {
         $request_data = {
-            method       => "POST",
-            host         => $self->influx_host,
-            port         => $self->influx_port,
-            path         => "/write",
-            query_string => "db=" . $self->influx_db,
-            body         => $body,
+            method        => "POST",
+            host          => $self->influx_host,
+            port          => $self->influx_port,
+            path          => "/write",
+            query_string  => "db=" . $self->influx_db,
+            body          => $body,
+            parse_chunked => 1,
             %args,
         };
     }
