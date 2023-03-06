@@ -18,19 +18,19 @@ use File::Spec qw(splitpath);
 
 extends 'InfluxDB::Writer::FileTailer';
 
-has 'done_dir' => ( is => 'rw', isa => "Str" );
+has 'done_dir' => ( is => 'rw', isa => "Str", lazy_build => 1 );
+
+sub _build_done_dir {
+    my $self = shift;
+    return catdir( $self->dir, 'done' );
+}
 
 before 'run' => sub {
     my $self = shift;
 
-    my $done_dir = catdir( $self->dir, 'done' );
-    if ( -d $done_dir ) {
-        $self->done_dir($done_dir);
-    }
-    else {
-        croak "Missing 'done' directory, please create: " . $done_dir;
-    }
-
+    my $done_dir = $self->done_dir;
+    croak "Missing 'done' directory, please create: " . $done_dir
+        unless ( -d $done_dir );
 };
 
 sub archive_file {
@@ -98,6 +98,7 @@ sub slurp_and_send {
             if ( $self->has_tags ) {
                 $line = $self->add_tags_to_line($line);
             }
+            next if ( length($line) == 0 );
             if ($line !~ /\s\d+$/) {
                 # Line does not end in timestamp
                 $log->warnf('Skipping probably broken line %s >>%s<<', $file, $line);
