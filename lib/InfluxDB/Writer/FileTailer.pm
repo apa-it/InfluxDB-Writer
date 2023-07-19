@@ -313,8 +313,6 @@ sub send {
             $res->{body},
             $request_data
         );
-
-        return;
     }
 
     return scalar(@to_send);
