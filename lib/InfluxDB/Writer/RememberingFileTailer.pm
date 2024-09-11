@@ -9,12 +9,11 @@ use feature 'say';
 use IO::Async::File;
 use IO::Async::FileStream;
 use IO::Async::Loop;
-use Hijk ();
-use Carp qw(croak);
+use Hijk                   ();
+use Carp                   qw(croak);
 use InfluxDB::LineProtocol qw(line2data data2line);
-use Log::Any qw($log);
-use File::Spec::Functions;
-use File::Spec qw(splitpath);
+use Log::Any               qw($log);
+use File::Spec::Functions  qw(splitpath);
 
 extends 'InfluxDB::Writer::FileTailer';
 
@@ -41,7 +40,7 @@ sub archive_file {
     my ( $vol, $dirs, $basename ) = File::Spec->splitpath($file);
 
     my $destination = catfile( $done_dir, $basename );
-    my $count = 0;
+    my $count       = 0;
     while ( -f $destination ) {
         $count++;
         my $new_destination = catfile( $done_dir, $basename ) . '_' . $count;
@@ -99,11 +98,13 @@ sub slurp_and_send {
                 $line = $self->add_tags_to_line($line);
             }
             next if ( length($line) == 0 );
-            if ($line !~ /\s\d+$/) {
+            if ( $line !~ /\s\d+$/ ) {
+
                 # Line does not end in timestamp
-                $log->warnf('Skipping probably broken line %s >>%s<<', $file, $line);
+                $log->warnf( 'Skipping probably broken line %s >>%s<<',
+                    $file, $line );
                 next;
-            
+
             }
             $self->buffer_push($line);
 
