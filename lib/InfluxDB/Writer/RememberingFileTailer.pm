@@ -13,7 +13,7 @@ use Hijk                   ();
 use Carp                   qw(croak);
 use InfluxDB::LineProtocol qw(line2data data2line);
 use Log::Any               qw($log);
-use File::Spec::Functions  qw(splitpath);
+use File::Spec::Functions  qw(splitpath catfile catdir);
 
 extends 'InfluxDB::Writer::FileTailer';
 
